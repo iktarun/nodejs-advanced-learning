@@ -1,43 +1,31 @@
-const cluster = require("cluster");
+// process.env.UV_THREADPOOL_SIZE;
+const express = require("express");
+const crypto = require("crypto");
+const app = express();
+const Worker = require("webworker-threads").Worker;
 
-console.log(cluster.isMaster);
+app.get("/", (req, res) => {
+  const worker = new Worker(function () {
+    this.onmessage = function () {
+      let counter = 0;
+      while (counter < 1e9) {
+        counter++;
+      }
 
-if (cluster.isMaster) {
-  cluster.fork();
-  cluster.fork();
-} else {
-  const express = require("express");
-  const app = express();
-  const crypto = require("crypto");
-  app.get("/", (req, res) => {
-    let start = Date.now();
-    while (Date.now() - start < 5000) {}
-    res.send("Slow");
+      postMessage(counter);
+    };
   });
 
-  app.get("/fast", (req, res) => {
-    res.send("This was fast!");
-  });
-  app.listen(3000);
-}
-// const Worker = require('webworker-threads').Worker;
+  worker.onmessage = function (message) {
+    console.log(message.data);
+    res.send("" + message.data);
+  };
 
-// app.get("/", (req, res) => {
-//   const worker = new Worker(function () {
-//     this.onmessage = function () {
-//       let counter = 0;
-//       while (counter < 1e9) {
-//         counter++;
-//       }
+  worker.postMessage();
+});
 
-//       postMessage(counter);
-//     };
-//   });
+app.get("/fast", (req, res) => {
+  res.send("This was fast!");
+});
 
-//   worker.onmessage = function (message) {
-//     console.log(message.data);
-//     res.send("" + message.data);
-//   };
-
-//   worker.postMessage();
-// });
+app.listen(3000);
