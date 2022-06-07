@@ -2,6 +2,8 @@ const cluster = require("cluster");
 
 console.log(cluster.isMaster);
 
+// Is the file is being executed in cluster mode?
+//Cluster manager itself will not execute the code instead it will fork a new child to do that
 if (cluster.isMaster) {
   cluster.fork();
   cluster.fork();
